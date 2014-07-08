@@ -8,6 +8,100 @@
 </head>
 <body>
 
+<script type="text/javascript">
+var db = null;
+
+//cria o banco de dados
+try {
+    if (window.openDatabase) {
+        db = openDatabase("db_aterias", "1.0", "materias Db", 200000);
+        if (!db)
+            alert("Não foi possivel criar o Bd");
+    } else
+        alert("Não foi possivel acessar o Bd");
+} catch(err) {
+    db = null;
+       alert("Não foi possivel acessar o Bd");
+}
+
+// Carrega os dados ou cria tabela
+function loaded()
+{
+    db.transaction(function(tx) {
+        tx.executeSql("SELECT COUNT(*) FROM materias", [], function(result) {
+            loadNotes();
+        }, function(tx, error) {
+            tx.executeSql("CREATE TABLE materias (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, nome TEXT, valor REAL, peso REAL, corrente REAL, falta REAL)", [], function(result) { 
+                loadNotes(); 
+            });
+        });
+    });
+}
+
+//carrega notas
+function loadNotes()
+{
+    db.transaction(function(tx) {
+        tx.executeSql("SELECT * FROM materias", [], function(tx, result) {
+            //percorre o resultado
+			for (var i = 0; i < result.rows.length; ++i) {
+                var row = result.rows.item(i);
+				novoCampo = "<li id='"+ row['id'] +"'><a href='#'> "+ row['nome'] + " ["+ row['valor'] + "]("+ row['peso']+") : "+row['corrente']+" ("+row['falta']+")</a></li>";
+				$(novoCampo).insertBefore("li.fim:first");
+				$("#matmenu").listview("refresh");
+			}
+
+            /*if (!result.rows.length)
+                newNote();*/
+        }, function(tx, error) {
+            alert('Falha ao acessar o BD - ' + error.message);
+            return;
+        });
+    });
+}
+
+function newNote()
+{
+ db.transaction(function (tx) 
+  {  
+    tx.executeSql("INSERT INTO materias ( nome, valor, peso, corrente, falta) VALUES ( ?, ?, ?, ?, ?)", [ "Nome da Avaliacão", 0, 1, 0, 0]);
+  }); 
+}
+
+// deleta
+function deleteNote()
+{
+  db.transaction(function(tx)
+  {
+    tx.executeSql("DELETE FROM materias WHERE id = ?", [note.id]);
+   });
+}
+
+function delTable(){
+  db.transaction(function(tx)
+  {
+    tx.executeSql("DROP TABLE 'materias'");
+   });
+}
+
+$(function () { 
+ $(".adicionarCampo").click(function () {
+	$("#matmenu").empty().append('<li class="fim"></li>');
+	newNote();
+	loadNotes();
+   });
+    $(".excluirTabla").click(function () {
+	delTable();
+	$("#matmenu").empty().append('<li class="fim"></li>');
+	$("#matmenu").listview("refresh");
+	loaded();
+   });
+});
+
+if (db != null)
+    addEventListener('load', loaded, false);
+ </script>
+
 <div data-role="page" id="pageone">
   <div data-role="panel" id="revealPanel" data-display="reveal"> 
     <h2>Menu</h2>
@@ -22,13 +116,24 @@
 
 
   <div data-role="header">
-  <a href="#revealPanel" class="ui-btn ui-btn-left ui-corner-all ui-shadow ui-icon-gear ui-btn-icon-left">Menu</a>
-    <h1>Materias</h1>
-  </div>
+
+    
+
+  <div data-role="footer" style="text-align:right;">
+    <a href="#revealPanel" class="ui-btn ui-btn-left ui-corner-all ui-shadow ui-icon-gear ui-btn-icon-left">Menu</a>
+	    <h1>Materias</h1>
+    <div data-role="controlgroup" data-type="horizontal">
+	  <a href="#" class="adicionarCampo ui-btn  ui-corner-all ui-shadow ui-icon-plus">Novo</a>
+	<a href="#" class="excluirTabla ui-btn ui-corner-all ui-shadow ui-icon-delete ">Apagar Tudo</a>
+
+   </div>
+
+
 
   <div data-role="main" class="ui-content">
-    <p>Teste do app</p>
-
+	<ul id="matmenu" data-role="listview">
+	  <li class="fim"></li>
+    </ul>
 
   </div>
 
