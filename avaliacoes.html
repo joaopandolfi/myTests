@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="css/jquery.mobile-1.4.2.min.css">
+<script src="js/jquery-1.10.2.min.js"></script>
+<script src="js/jquery.mobile-1.4.2.min.js"></script>
+</head>
+<body>
+
+<script type="text/javascript">
+var db = null;
+
+//cria o banco de dados
+try {
+    if (window.openDatabase) {
+        db = openDatabase("db_avalicao", "1.0", "Avaliacoes Db", 200000);
+        if (!db)
+            alert("Não foi possivel criar o Bd");
+    } else
+        alert("Não foi possivel acessar o Bd");
+} catch(err) {
+    db = null;
+       alert("Não foi possivel acessar o Bd");
+}
+
+// Carrega os dados ou cria tabela
+function loaded()
+{
+    db.transaction(function(tx) {
+        tx.executeSql("SELECT COUNT(*) FROM avaliacao", [], function(result) {
+            loadTable();
+        }, function(tx, error) {
+            tx.executeSql("CREATE TABLE avaliacao (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, idMateria INTEGER, nome TEXT, descricao TEXT, valor REAL, peso REAL, corrente REAL, falta REAL)", [], function(result) { 
+                loadTable(); 
+            });
+        });
+    });
+}
+
+//carrega notas
+function loadTable()
+{
+    db.transaction(function(tx) {
+		idMateria = localStorage.getItem("idMateria");
+        tx.executeSql("SELECT * FROM avaliacao WHERE idMateria = "+idMateria, [], function(tx, result) {
+            //percorre o resultado
+			for (var i = 0; i < result.rows.length; ++i) {
+                var row = result.rows.item(i);
+				novoCampo = "<li><a data-ajax='false' href='viewAvaliacao.html?idAv="+ row['id'] +"'> "+ row['nome'] + " ["+ row['valor'] + "]("+ row['peso']+") : "+row['corrente']+" ("+row['falta']+")</a></li>";
+				$(novoCampo).insertBefore("li.fim:first");
+				$("#matmenu").listview("refresh");
+			}
+        }, function(tx, error) {
+            alert('Falha ao acessar o BD - ' + error.message);
+            return;
+        });
+    });
+}
+
+function delTable(){
+  db.transaction(function(tx)
+  {
+    tx.executeSql("DROP TABLE 'avaliacao'");
+   });
+}
+
+//debugger
+$(function () { 
+ $("#deltable").click(function () {
+	delTable();
+	//$("#matmenu").
+	});
+});
+
+if (db != null)
+    addEventListener('load', loaded, false);
+ </script>
+
+<div data-role="page" id="pageone">
+  <div data-role="panel" id="revealPanel"> 
+    <h2>Menu</h2>
+    <ul data-role="listview" data-inset="true">
+      <li><a href="#">Matérias Ativas</a></li>
+      <li><a href="#">Matérias completas</a></li>
+      <li><a href="#">Configurações</a></li>
+    </ul>
+    <a href="#pageone" data-rel="close" class="ui-btn ui-btn-inline ui-shadow ui-corner-all ui-btn-a ui-icon-delete ui-btn-icon-left">Fechar</a>
+  </div> 
+
+
+  <div data-role="header">
+  <div data-role="footer" style="text-align:right;">
+    <a href="#revealPanel" class="ui-btn ui-btn-left ui-corner-all ui-shadow ui-icon-gear ui-btn-icon-left">Menu</a>
+	    <h1>Materias</h1>
+    <div data-role="controlgroup" data-type="horizontal">
+	<a href="#" id="deltable" class="ui-btn ui-corner-all ui-shadow ui-icon-delete ">Apagar Tudo</a>
+
+   </div>
+
+  <div data-role="main" class="ui-content">
+	<ul id="matmenu" data-role="listview">
+	  <li class="fim"></li>
+    </ul>
+  </div>
+
+  <div data-role="footer">
+	<div align="center">
+		<a href="novaAvaliacao.html" data-ajax="false" class="ui-btn ui-btn-inline ui-shadow ui-corner-all ui-btn-a ui-icon-plus ui-btn-icon-left">Nova Avaliação</a>
+	</div>
+  </div> 
+</div> 
+</body>
+</html>

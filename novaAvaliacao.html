@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="css/jquery.mobile-1.4.2.min.css">
+<script src="js/jquery-1.10.2.min.js"></script>
+<script src="js/jquery.mobile-1.4.2.min.js"></script>
+<meta charset="utf-8"> 
+</head>
+<body>
+<script type="text/javascript">
+var db = null;
+
+//cria o banco de dados
+try {
+    if (window.openDatabase) {
+        db = openDatabase("db_avalicao", "1.0", "Avaliacoes Db", 200000);
+        if (!db)
+            alert("Não foi possivel criar o Bd");
+    } else
+        alert("Não foi possivel acessar o Bd");
+} catch(err) {
+    db = null;
+       alert("Não foi possivel acessar o Bd");
+}
+
+//nova avaliacao
+function novaAvaliacao()
+{
+    if($('#nome').val() == "") 
+		return;
+
+	if($('#peso').val() == "") 
+		peso = 1;
+	else
+		peso = $('#peso').val() == "";
+	
+    if($('#valor').val() == "") 
+		valor = 0;
+	else
+		valor = $('#valor').val();
+		
+ db.transaction(function (tx) 
+  {  
+ 	tx.executeSql("INSERT INTO avaliacao (idMateria, nome, valor, peso, descricao, corrente, falta) VALUES (?, ?, ?, ?, ?, ?, ?)", 
+	[ localStorage.getItem('idMateria'),
+	$('#nome').val(),
+	valor,
+	peso,
+	$('#descricao').val(),0, 0]);
+  });
+  
+	setTimeout("document.location = 'avaliacoes.html'",500); 
+}
+
+$(function () { 
+ $("#salvar").click(function () {
+	novaAvaliacao();
+	});
+});
+ </script>
+
+
+  <div data-role="header">  
+  <div data-role="footer" style="text-align:right;">
+    <a href="avaliacoes.html" data-ajax='false' class="ui-btn ui-btn-left ui-corner-all ui-shadow ui-icon-delete ui-btn-icon-left">Cancelar</a>
+	    <h1>Nova Avaliação</h1>
+	  <a href="#" id="salvar" data-ajax='false' class="ui-btn ui-btn-right  ui-btn-icon-left ui-corner-all ui-shadow ui-icon-check">Salvar</a>
+
+  <div data-role="main" class="ui-content">
+  <form id="formulario">
+	<div data-role="fieldcontain">
+		<input type="text" name="nome" placeholder="Nome" id="nome" value=""  />
+		<input type="text" name="valor" placeholder="Valor" id="valor" value=""  />
+		<input type="text" name="peso" placeholder="Peso" id="peso" value=""  />
+		<textarea cols="40" rows="2" placeholder="Descricao" name="descricao" id="descricao"></textarea>
+	</div>	
+	</form>
+  </div>
+
+  <div data-role="footer">
+   </div> 
+</div>
+</div> 
+</body>
+</html>
