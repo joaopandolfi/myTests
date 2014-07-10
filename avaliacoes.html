@@ -9,9 +9,13 @@
 <body>
 
 <script type="text/javascript">
+// === Variáveis globais ===
 var db = null;
+var media;
+var meta;
+var somaTotal;
 
-//cria o banco de dados
+//cria/acessa o banco de dados
 try {
     if (window.openDatabase) {
         db = openDatabase("db_avalicao", "1.0", "Avaliacoes Db", 200000);
@@ -43,6 +47,15 @@ function loadTable()
 {
     db.transaction(function(tx) {
 		idMateria = localStorage.getItem("idMateria");
+		// soma o as notas
+        tx.executeSql("SELECT sum(corrente*peso) as totalMaterias FROM avaliacao WHERE idMateria = "+idMateria+" group by idMateria", [], function(tx, result) {
+			for (var i = 0; i < result.rows.length; ++i) {
+                var row = result.rows.item(i);
+				somaTotal = row['totalMaterias'];
+			}
+			somaTotal = somaTotal
+        });		
+		//carrega as notas
         tx.executeSql("SELECT * FROM avaliacao WHERE idMateria = "+idMateria, [], function(tx, result) {
             //percorre o resultado
 			for (var i = 0; i < result.rows.length; ++i) {
@@ -50,11 +63,40 @@ function loadTable()
 				novoCampo = "<li><a data-ajax='false' href='viewAvaliacao.html?idAv="+ row['id'] +"'> "+ row['nome'] + " ["+ row['valor'] + "]("+ row['peso']+") : "+row['corrente']+" ("+row['falta']+")</a></li>";
 				$(novoCampo).insertBefore("li.fim:first");
 				$("#matmenu").listview("refresh");
-			}
+			}	
         }, function(tx, error) {
-            alert('Falha ao acessar o BD - ' + error.message);
+            alert('Falha ao acessar as avaliações - ' + error.message);
             return;
         });
+		//carrega classe
+        tx.executeSql("SELECT * FROM materias WHERE id = "+idMateria, [], function(tx, result) {
+            //recebe o resultado
+			for (var i = 0; i < result.rows.length; ++i) {
+	            var row = result.rows.item(0);
+				media = row['media'];
+				meta = row['meta'];
+				maxima = row['notaMaxima'];
+				faltaMedia = media - somaTotal;
+				faltaMeta = meta - somaTotal;
+				if( faltaMedia < 0 )
+					faltaMedia = 0;
+				if(faltaMeta < 0)
+					faltaMeta = 0;
+				document.getElementById("nomeMateria").innerHTML  = row['nome'];
+				novoCampo = "<tr><td>Descricão: </td><td colspan='3'>"+ row['descricao'] +
+				"</td></tr> <tr><td>Nota Máxima: </td><td>"+ maxima +
+				"</td> <td> ==> Nota Atual: </td><td>"+ somaTotal +
+				"</td></tr> <tr><td>Média: </td><td>"+ media +
+				"</td><td> ==> Falta: </td><td>"+ faltaMedia +
+				"</td></tr> <tr><td>Meta: </td><td>"+ meta +
+				"</td><td> ==> Falta: </td><td>"+ faltaMeta +"</td></tr>";
+				$(novoCampo).insertBefore("tr.fimInfo:first");
+				}
+			}, function(tx, error) {
+            alert('Falha ao acessar as materias - ' + error.message);
+            return;
+        });
+ 
     });
 }
 
@@ -69,7 +111,6 @@ function delTable(){
 $(function () { 
  $("#deltable").click(function () {
 	delTable();
-	//$("#matmenu").
 	});
 });
 
@@ -83,6 +124,7 @@ if (db != null)
     <ul data-role="listview" data-inset="true">
       <li><a href="#">Matérias Ativas</a></li>
       <li><a href="#">Matérias completas</a></li>
+      <li><a href="#">Anotações</a></li>
       <li><a href="#">Configurações</a></li>
     </ul>
     <a href="#pageone" data-rel="close" class="ui-btn ui-btn-inline ui-shadow ui-corner-all ui-btn-a ui-icon-delete ui-btn-icon-left">Fechar</a>
@@ -92,12 +134,18 @@ if (db != null)
   <div data-role="header">
   <div data-role="footer" style="text-align:right;">
     <a href="#revealPanel" class="ui-btn ui-btn-left ui-corner-all ui-shadow ui-icon-gear ui-btn-icon-left">Menu</a>
-	    <h1>Materias</h1>
+	    <h1 id="nomeMateria"></h1>
     <div data-role="controlgroup" data-type="horizontal">
 	<a href="#" id="deltable" class="ui-btn ui-corner-all ui-shadow ui-icon-delete ">Apagar Tudo</a>
 
    </div>
-
+   
+	<div class="ui-content" align="left" style='background-color:#FFF'>
+	<table id="info">
+		<tr class="fimInfo"></tr>
+	</table>
+	</div>
+	<h1>Avaliações</h1>
   <div data-role="main" class="ui-content">
 	<ul id="matmenu" data-role="listview">
 	  <li class="fim"></li>

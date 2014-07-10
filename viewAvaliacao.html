@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="css/jquery.mobile-1.4.2.min.css">
+<script src="js/jquery-1.10.2.min.js"></script>
+<script src="js/jquery.mobile-1.4.2.min.js"></script>
+</head>
+<body>
+<script type="text/javascript">
+// === variaveis globais ===
+var db = null;
+var idAval;
+
+//cria o banco de dados
+try {
+    if (window.openDatabase) {
+        db = openDatabase("db_avalicao", "1.0", "Avaliacoes Db", 200000);
+        if (!db)
+            alert("Não foi possivel criar o Bd");
+    } else
+        alert("Não foi possivel acessar o Bd");
+} catch(err) {
+    db = null;
+       alert("Não foi possivel acessar o Bd");
+}
+
+//pega parametro GET
+function _GET(name)
+{
+  var url   = window.location.search.replace("?", "");
+  var itens = url.split("&");
+
+  for(n in itens)
+  {
+    if( itens[n].match(name) )
+    {
+      return decodeURIComponent(itens[n].replace(name+"=", ""));
+    }
+  }
+  return null;
+}
+
+//salvar avaliacao
+function salvar()
+{
+    if($('#nota').val() == "") 
+		nota = 0;
+	else
+		nota = $('#nota').val();
+		
+	db.transaction(function (tx){tx.executeSql("UPDATE avaliacao SET corrente="+ nota +" WHERE id="+idAval);});
+	setTimeout("document.location = 'avaliacoes.html'",500); 
+}
+
+//carrega dados
+function loadData()
+{
+	idAval = _GET("idAv");
+    db.transaction(function(tx) {
+        tx.executeSql("SELECT * FROM avaliacao WHERE id = ?", [idAval], function(tx, result) {
+            //percorre o resultado
+			for (var i = 0; i < result.rows.length; ++i) {
+                var row = result.rows.item(i);
+				document.getElementById("nomeAvaliacao").innerHTML  = row['nome'];
+				novoCampo = "<tr><td>Descricão: </td><td colspan='3'>"+ row['descricao'] +
+				"</td></tr> <tr><td>Nota Máxima: </td><td>"+ row['valor'] +
+				"</td></tr> <tr><td>Peso: </td><td>"+ row['peso'] +"</td></tr>";
+				$(novoCampo).insertBefore("tr.fimInfo:first");
+			}
+        }, function(tx, error) {
+            alert('Falha ao acessar o BD - ' + error.message);
+            return;
+        });
+    });
+}
+
+$(function () { 
+ $("#salvar").click(function () {
+	salvar();
+	});
+});
+
+if (db != null)
+    addEventListener('load', loadData, false);
+ </script>
+
+
+  <div data-role="header">  
+  <div data-role="footer" style="text-align:right;">
+    <a href="avaliacoes.html" data-ajax='false' class="ui-btn ui-btn-left ui-corner-all ui-shadow ui-icon-delete ui-btn-icon-left">Cancelar</a>
+	    <h1 id="nomeAvaliacao"></h1>
+	  <a href="#" id="salvar" data-ajax='false' class="ui-btn ui-btn-right  ui-btn-icon-left ui-corner-all ui-shadow ui-icon-check">Salvar</a>
+
+  <div data-role="main" class="ui-content">
+  	<table id="info">
+		<tr class="fimInfo"></tr>
+	</table>
+
+  <form id="formulario">
+	<div data-role="fieldcontain">
+		<input type="text" placeholder="Nota" id="nota" value=""  />
+	</div>	
+	</form>
+  </div>
+
+  <div data-role="footer">
+   </div> 
+</div>
+</div> 
+</body>
+</html>

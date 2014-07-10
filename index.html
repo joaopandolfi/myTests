@@ -8,6 +8,58 @@
 </head>
 <body>
 <script type="text/javascript">
+//cria/acessa o banco de dados
+try {
+    if (window.openDatabase) {
+        db = openDatabase("db_avalicao", "1.0", "Avaliacoes Db", 200000);
+        if (!db)
+            alert("Não foi possivel criar o Bd");
+    } else
+        alert("Não foi possivel acessar o Bd");
+} catch(err) {
+    db = null;
+       alert("Não foi possivel acessar o Bd");
+}
+function loaded()
+{
+    db.transaction(function(tx) {
+        tx.executeSql("SELECT COUNT(*) FROM materias", [], function(result) {
+        }, function(tx, error) {
+            tx.executeSql("CREATE TABLE materias (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, nome TEXT, descricao TEXT, notaMaxima Real, media REAL, meta REAL)", [], function(result) { 
+            });
+        });
+    });
+}
+
+function newTable(){
+ db.transaction(function (tx) 
+  {  
+ 	tx.executeSql("INSERT INTO materias (nome,descricao,notaMaxima,media,meta) VALUES (?, ?, ?, ?, ?)", ["Matematica","terceiro periodo",100,60,95]);
+  });
+}
+
+function delTable(){
+  db.transaction(function(tx)
+  {
+    tx.executeSql("DROP TABLE 'materias'");
+   });
+}
+
+//debugger
+$(function () { 
+ $("#deltable").click(function () {
+	delTable();
+	alert("apagou");
+	});
+	 $("#newTable").click(function () {
+	newTable();
+	alert("criou");
+	});
+});
+
+if (db != null)
+    addEventListener('load', loaded, false);
+	
 localStorage.setItem("idMateria",1);
 </script>
   <div data-role="header">
@@ -17,8 +69,9 @@ localStorage.setItem("idMateria",1);
 
   <div data-role="main" class="ui-content">
     <p>Teste do app</p>
-	<a data-ajax="false" href="avaliacoes.html">Ir para o teste </a>
-
+	<a data-ajax="false" href="avaliacoes.html">Ir para o teste </a><BR>
+	<a data-ajax="false" id="deltable" href="#">apagarTabela </a><BR>
+	<a data-ajax="false" id="newTable" href="#">Nova tabela Teste </a>
   </div>
 
   <div data-role="footer">
