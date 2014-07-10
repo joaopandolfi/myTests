@@ -12,6 +12,7 @@
 var db = null;
 var idAval;
 var media;
+var maxGeral;
 var maxima;
 
 //cria o banco de dados
@@ -58,7 +59,7 @@ function salvar()
 		return;
 	}
 
-	media = media/100;
+	media = media/maxGeral;
 	var falta = nota - (media*maxima);
 	falta = falta.toFixed(2);
 	db.transaction(function (tx){tx.executeSql("UPDATE avaliacao SET corrente="+ nota +", falta = "+ falta +" WHERE id="+idAval);});
@@ -95,6 +96,7 @@ function loadData()
 			for (var i = 0; i < result.rows.length; ++i) {
 	            var row = result.rows.item(0);
 					media = row['media'];
+					maxGeral = row['notaMaxima'];
 				}
 			});
     });
