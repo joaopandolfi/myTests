@@ -2,9 +2,9 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="css/jquery.mobile-1.4.2.min.css">
-<script src="js/jquery-1.10.2.min.js"></script>
-<script src="js/jquery.mobile-1.4.2.min.js"></script>
+<link rel="stylesheet" href="../css/jquery.mobile-1.4.2.min.css">
+<script src="../js/jquery-1.10.2.min.js"></script>
+<script src="../js/jquery.mobile-1.4.2.min.js"></script>
 <meta charset="utf-8"> 
 </head>
 <body>
@@ -33,13 +33,23 @@ function novaAvaliacao()
 	if($('#peso').val() == "") 
 		peso = 1;
 	else
-		peso = $('#peso').val();
+		peso = $('#peso').val().replace(",",".");
 	
     if($('#valor').val() == "") 
 		valor = 0;
 	else
-		valor = $('#valor').val();
-		
+		valor = $('#valor').val().replace(",",".");
+	
+	if(isNaN(peso))
+	{
+		alert("Formato Invalido 'Peso'");
+		return;
+	}
+	if(isNaN(valor))
+	{
+		alert("Formato Invalido 'Valor'");
+		return;
+	}	
  db.transaction(function (tx) 
   {  
  	tx.executeSql("INSERT INTO avaliacao (idMateria, nome, valor, peso, descricao, corrente, falta) VALUES (?, ?, ?, ?, ?, ?, ?)", 
@@ -65,7 +75,6 @@ $(function () {
   <div data-role="footer" style="text-align:right;">
     <a href="avaliacoes.html" data-ajax='false' class="ui-btn ui-btn-left ui-corner-all ui-shadow ui-icon-delete ui-btn-icon-left">Cancelar</a>
 	    <h1>Nova Avaliação</h1>
-	  <a href="#" id="salvar" data-ajax='false' class="ui-btn ui-btn-right  ui-btn-icon-left ui-corner-all ui-shadow ui-icon-check">Salvar</a>
 
   <div data-role="main" class="ui-content">
   <form id="formulario">
@@ -76,6 +85,10 @@ $(function () {
 		<textarea cols="40" rows="2" placeholder="Descricao" name="descricao" id="descricao"></textarea>
 	</div>	
 	</form>
+	<div align="center">
+		<a href="#" id="salvar" data-ajax='false' class="ui-btn ui-btn-inline ui-shadow ui-corner-all ui-btn-a ui-icon-check ui-btn-icon-left">Salvar</a>
+	</div>
+
   </div>
 
   <div data-role="footer">

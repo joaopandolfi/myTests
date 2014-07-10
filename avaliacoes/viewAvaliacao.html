@@ -2,15 +2,17 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="css/jquery.mobile-1.4.2.min.css">
-<script src="js/jquery-1.10.2.min.js"></script>
-<script src="js/jquery.mobile-1.4.2.min.js"></script>
+<link rel="stylesheet" href="../css/jquery.mobile-1.4.2.min.css">
+<script src="../js/jquery-1.10.2.min.js"></script>
+<script src="../js/jquery.mobile-1.4.2.min.js"></script>
 </head>
 <body>
 <script type="text/javascript">
 // === variaveis globais ===
 var db = null;
 var idAval;
+var media;
+var maxima;
 
 //cria o banco de dados
 try {
@@ -44,12 +46,22 @@ function _GET(name)
 //salvar avaliacao
 function salvar()
 {
+	var nota;
     if($('#nota').val() == "") 
 		nota = 0;
 	else
-		nota = $('#nota').val();
-		
-	db.transaction(function (tx){tx.executeSql("UPDATE avaliacao SET corrente="+ nota +" WHERE id="+idAval);});
+		nota = $('#nota').val().replace(",",".");
+	
+	if(isNaN(nota))
+	{
+		alert("Formato Invalido 'Nota'");
+		return;
+	}
+
+	media = media/100;
+	var falta = nota - (media*maxima);
+	falta = falta.toFixed(2);
+	db.transaction(function (tx){tx.executeSql("UPDATE avaliacao SET corrente="+ nota +", falta = "+ falta +" WHERE id="+idAval);});
 	setTimeout("document.location = 'avaliacoes.html'",500); 
 }
 
@@ -57,27 +69,43 @@ function salvar()
 function loadData()
 {
 	idAval = _GET("idAv");
+	idMateria = localStorage.getItem("idMateria");
     db.transaction(function(tx) {
         tx.executeSql("SELECT * FROM avaliacao WHERE id = ?", [idAval], function(tx, result) {
             //percorre o resultado
 			for (var i = 0; i < result.rows.length; ++i) {
                 var row = result.rows.item(i);
+				idMateria = row['idMateria'];
+				maxima = row['valor'];
 				document.getElementById("nomeAvaliacao").innerHTML  = row['nome'];
+				$("#nota").val(row['corrente']);
 				novoCampo = "<tr><td>Descricão: </td><td colspan='3'>"+ row['descricao'] +
-				"</td></tr> <tr><td>Nota Máxima: </td><td>"+ row['valor'] +
-				"</td></tr> <tr><td>Peso: </td><td>"+ row['peso'] +"</td></tr>";
+				"</td></tr> <tr><td>Nota Máxima: </td><td>"+ maxima +
+				"</td></tr> <tr><td>Peso: </td><td>"+ row['peso'] +
+				"</td></tr> <tr><td>Desvio da Média: </td><td>"+ row['falta'] +"</td></tr>";
 				$(novoCampo).insertBefore("tr.fimInfo:first");
 			}
         }, function(tx, error) {
             alert('Falha ao acessar o BD - ' + error.message);
             return;
         });
+		//carrega classe
+        tx.executeSql("SELECT * FROM materias WHERE id = "+idMateria, [], function(tx, result) {
+            //recebe o resultado
+			for (var i = 0; i < result.rows.length; ++i) {
+	            var row = result.rows.item(0);
+					media = row['media'];
+				}
+			});
     });
 }
 
 $(function () { 
  $("#salvar").click(function () {
 	salvar();
+	});
+ $("#editar").click(function () {
+	setTimeout("document.location = 'editAvaliacao.html?idAv="+ idAval +"'",500); 
 	});
 });
 
@@ -90,18 +118,23 @@ if (db != null)
   <div data-role="footer" style="text-align:right;">
     <a href="avaliacoes.html" data-ajax='false' class="ui-btn ui-btn-left ui-corner-all ui-shadow ui-icon-delete ui-btn-icon-left">Cancelar</a>
 	    <h1 id="nomeAvaliacao"></h1>
-	  <a href="#" id="salvar" data-ajax='false' class="ui-btn ui-btn-right  ui-btn-icon-left ui-corner-all ui-shadow ui-icon-check">Salvar</a>
+		<a href="#" id="editar"  data-ajax='false' class="ui-btn ui-btn-right  ui-btn-icon-left ui-corner-all ui-shadow ui-icon-edit">Editar</a>
 
   <div data-role="main" class="ui-content">
-  	<table id="info">
-		<tr class="fimInfo"></tr>
-	</table>
-
+  	<div align="left">
+		<table id="info">
+			<tr class="fimInfo"></tr>
+		</table>
+	</div>
   <form id="formulario">
 	<div data-role="fieldcontain">
 		<input type="text" placeholder="Nota" id="nota" value=""  />
 	</div>	
 	</form>
+	<div align="center">
+		<a href="#" id="salvar" data-ajax='false' class="ui-btn ui-btn-inline ui-shadow ui-corner-all ui-btn-a ui-icon-check ui-btn-icon-left">Salvar</a>
+	</div>
+
   </div>
 
   <div data-role="footer">

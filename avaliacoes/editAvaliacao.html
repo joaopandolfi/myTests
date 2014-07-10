@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../css/jquery.mobile-1.4.2.min.css">
+<script src="../js/jquery-1.10.2.min.js"></script>
+<script src="../js/jquery.mobile-1.4.2.min.js"></script>
+</head>
+<body>
+<script type="text/javascript">
+// === variaveis globais ===
+var db = null;
+var idAval;
+
+//cria/acessa o banco de dados
+try {
+    if (window.openDatabase) {
+        db = openDatabase("db_avalicao", "1.0", "Avaliacoes Db", 200000);
+        if (!db)
+            alert("Não foi possivel criar o Bd");
+    } else
+        alert("Não foi possivel acessar o Bd");
+} catch(err) {
+    db = null;
+       alert("Não foi possivel acessar o Bd");
+}
+
+function loadData()
+{
+idAval = _GET("idAv");
+db.transaction(function(tx) {
+	tx.executeSql("SELECT * FROM avaliacao WHERE id = ?", [idAval], function(tx, result) {
+		//percorre o resultado
+		for (var i = 0; i < result.rows.length; ++i) {
+			var row = result.rows.item(i);
+			$("#nome").val(row["nome"]);
+			$("#valor").val(row["valor"]);
+			$("#peso").val(row["peso"]);
+			$("#descricao").val(row["descricao"]);
+		}
+	}, function(tx, error) {
+		alert('Falha ao acessar o BD - ' + error.message);
+		return;
+	});
+});
+}
+
+//pega parametro GET
+function _GET(name)
+{
+  var url   = window.location.search.replace("?", "");
+  var itens = url.split("&");
+
+  for(n in itens)
+  {
+    if( itens[n].match(name) )
+    {
+      return decodeURIComponent(itens[n].replace(name+"=", ""));
+    }
+  }
+  return null;
+}
+
+//nova atualiza
+function salvar()
+{
+    if($('#nome').val() == "") 
+		return;
+
+	if($('#peso').val() == "") 
+		peso = 1;
+	else
+		peso = $('#peso').val().replace(",",".");
+	
+    if($('#valor').val() == "") 
+		valor = 0;
+	else
+		valor = $('#valor').val().replace(",",".");
+
+	if(isNaN(peso))
+	{
+		alert("Formato Inválido 'Peso'");
+		return;
+	}
+	if(isNaN(valor))
+	{
+		alert("Formato Inválido 'Valor'");
+		return;
+	}
+	db.transaction(function (tx){tx.executeSql("UPDATE avaliacao SET nome=?, valor=? , peso=?, descricao=? WHERE id="+idAval,[$('#nome').val(),valor,peso,$('#descricao').val()]);});
+	setTimeout("document.location = 'avaliacoes.html'",500); 
+}
+
+// apaga avaliação
+function delAvaliacao()
+{
+	db.transaction(function (tx){tx.executeSql("DELETE FROM avaliacao WHERE id="+idAval);});
+	setTimeout("document.location = 'avaliacoes.html'",500);
+ }
+ 
+$(function () { 
+ $("#salvar").click(function () {
+	salvar();
+	});
+ $("#deltable").click(function () {
+	delAvaliacao();
+	});
+});
+
+if (db != null)
+    addEventListener('load', loadData, false);
+ </script>
+
+  <div data-role="header">  
+  <div data-role="footer" style="text-align:right;">
+    <a href="avaliacoes.html" data-ajax='false' class="ui-btn ui-btn-left ui-corner-all ui-shadow ui-icon-delete ui-btn-icon-left">Cancelar</a>
+	    <h1>Nova Avaliação</h1>
+	<a href="#myPopupDialog" id="udeltable"  data-rel="popup" class="ui-btn ui-btn-right  ui-btn-icon-left ui-corner-all ui-shadow ui-icon-edit">Deletar</a>
+	  
+  <div data-role="main" class="ui-content">
+  <form id="formulario">
+	<div data-role="fieldcontain">
+		<input type="text" name="nome" placeholder="Nome" id="nome" value=""  />
+		<input type="text" name="valor" placeholder="Valor" id="valor" value="" />
+		<input type="text" name="peso" placeholder="Peso" id="peso" value=""  />
+		<textarea cols="40" rows="2" placeholder="Descricao" name="descricao" id="descricao"></textarea>
+	</div>	
+	</form>
+	<div align="center">
+		<a href="#" id="salvar" data-ajax='false' class="ui-btn ui-btn-inline ui-shadow ui-corner-all ui-btn-a ui-icon-check ui-btn-icon-left">Salvar</a>
+	</div>
+  </div>
+
+  <div data-role="footer">
+   </div> 
+</div>
+	 <div data-role="popup" id="myPopupDialog">
+      <div data-role="header">
+        <h1>Deletar?</h1>
+      </div>
+	      <div data-role="main" class="ui-content">
+        <a href="#" id="deltable" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b ui-icon-check ui-btn-icon-left">Sim</a>
+		<a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b ui-icon-delete ui-btn-icon-left">Não</a>
+      </div>
+	  </div>
+
+</div> 
+</body>
+</html>

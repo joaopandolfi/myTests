@@ -2,9 +2,9 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="css/jquery.mobile-1.4.2.min.css">
-<script src="js/jquery-1.10.2.min.js"></script>
-<script src="js/jquery.mobile-1.4.2.min.js"></script>
+<link rel="stylesheet" href="../css/jquery.mobile-1.4.2.min.css">
+<script src="../js/jquery-1.10.2.min.js"></script>
+<script src="../js/jquery.mobile-1.4.2.min.js"></script>
 </head>
 <body>
 
@@ -48,13 +48,12 @@ function loadTable()
     db.transaction(function(tx) {
 		idMateria = localStorage.getItem("idMateria");
 		// soma o as notas
-        tx.executeSql("SELECT sum(corrente*peso) as totalMaterias FROM avaliacao WHERE idMateria = "+idMateria+" group by idMateria", [], function(tx, result) {
+        tx.executeSql("SELECT sum(corrente*peso) as totalMaterias , sum(peso) as totalPeso FROM avaliacao WHERE idMateria = "+idMateria+" group by idMateria", [], function(tx, result) {
 			for (var i = 0; i < result.rows.length; ++i) {
                 var row = result.rows.item(i);
 				somaTotal = row['totalMaterias'];
 			}
-			somaTotal = somaTotal
-        });		
+        });	
 		//carrega as notas
         tx.executeSql("SELECT * FROM avaliacao WHERE idMateria = "+idMateria, [], function(tx, result) {
             //percorre o resultado
@@ -78,18 +77,28 @@ function loadTable()
 				maxima = row['notaMaxima'];
 				faltaMedia = media - somaTotal;
 				faltaMeta = meta - somaTotal;
-				if( faltaMedia < 0 )
+				//controle dos icones
+				checkMeta = checkMedia = "";
+				forward = "<img src='../images/forward.png'>";
+				if( faltaMedia <= 0 )
+				{
+					checkMedia = "<img src='../images/check.png'>";
 					faltaMedia = 0;
-				if(faltaMeta < 0)
+				}
+				if(faltaMeta <= 0)
+				{
+					checkMeta = "<img src='../images/check.png'>";
 					faltaMeta = 0;
+				}
+				//escreve na tela
 				document.getElementById("nomeMateria").innerHTML  = row['nome'];
 				novoCampo = "<tr><td>Descricão: </td><td colspan='3'>"+ row['descricao'] +
 				"</td></tr> <tr><td>Nota Máxima: </td><td>"+ maxima +
-				"</td> <td> ==> Nota Atual: </td><td>"+ somaTotal +
+				"</td> <td> "+ forward +" Nota Atual: </td><td>"+ somaTotal +
 				"</td></tr> <tr><td>Média: </td><td>"+ media +
-				"</td><td> ==> Falta: </td><td>"+ faltaMedia +
+				"</td><td> "+ forward +" Falta: </td><td>"+ faltaMedia + checkMedia +
 				"</td></tr> <tr><td>Meta: </td><td>"+ meta +
-				"</td><td> ==> Falta: </td><td>"+ faltaMeta +"</td></tr>";
+				"</td><td> "+ forward +" Falta: </td><td>"+ faltaMeta +"</td></tr>";
 				$(novoCampo).insertBefore("tr.fimInfo:first");
 				}
 			}, function(tx, error) {
@@ -130,15 +139,11 @@ if (db != null)
     <a href="#pageone" data-rel="close" class="ui-btn ui-btn-inline ui-shadow ui-corner-all ui-btn-a ui-icon-delete ui-btn-icon-left">Fechar</a>
   </div> 
 
-
   <div data-role="header">
   <div data-role="footer" style="text-align:right;">
     <a href="#revealPanel" class="ui-btn ui-btn-left ui-corner-all ui-shadow ui-icon-gear ui-btn-icon-left">Menu</a>
 	    <h1 id="nomeMateria"></h1>
-    <div data-role="controlgroup" data-type="horizontal">
-	<a href="#" id="deltable" class="ui-btn ui-corner-all ui-shadow ui-icon-delete ">Apagar Tudo</a>
-
-   </div>
+		<a href="#" id="deltable"  data-ajax='false' class="ui-btn ui-btn-right  ui-btn-icon-left ui-corner-all ui-shadow ui-icon-edit">Editar</a>
    
 	<div class="ui-content" align="left" style='background-color:#FFF'>
 	<table id="info">
